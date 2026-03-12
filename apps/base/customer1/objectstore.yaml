@@ -1,0 +1,15 @@
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: customer1-objectstore
+spec:
+  configuration:
+    destinationPath: "https://STORAGE_ACCOUNT.blob.core.windows.net/customer1"
+    azureCredentials:
+      storageAccount:
+        name: customer1-backup-creds
+        key: storage-account-name
+      storageSasToken:
+        name: customer1-backup-creds
+        key: customer1-blob-sas
+  retentionPolicy: "14d"

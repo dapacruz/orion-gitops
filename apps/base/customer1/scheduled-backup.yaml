@@ -1,0 +1,11 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  # name: customer1-db-backup
+  name: customer1-db-backup2
+spec:
+  schedule: "0 0 3 * * *"
+  backupOwnerReference: cluster
+  cluster:
+    # name: customer1-db
+    name: customer1-db2
