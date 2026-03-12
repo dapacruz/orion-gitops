@@ -7,6 +7,6 @@ data:
   N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
   N8N_SECURE_COOKIE: "true"
   DB_TYPE: "postgresdb"
-  DB_POSTGRESDB_HOST: "customer1-db1-rw.customer1.svc.cluster.local"
+  DB_POSTGRESDB_HOST: "customer1-db-rw.customer1.svc.cluster.local"
   DB_POSTGRESDB_PORT: "5432"
   DB_POSTGRESDB_DATABASE: "app"
