@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alerting-contact-points
+  namespace: monitoring
+  labels:
+    grafana_alert: "1"
+data:
+  contact-points.yaml: |
+    apiVersion: 1
+    contactPoints:
+      - orgId: 1
+        name: Telegram Bot
+        receivers:
+          - uid: mercury-telegram
+            type: telegram
+            settings:
+              bottoken: $TELEGRAM_BOT_TOKEN
+              chatid: "6871863215"
+              message: |
+                {{ if eq .Status "firing" }}🔥 FIRING{{ else if eq .Status "resolved" }}✅ RESOLVED{{ else }}⚠️ {{ .Status | toUpper }}{{ end }}
+
+                {{ range .Alerts }}
+                *{{ .Labels.alertname }}*
+                {{ if .Labels.severity }}Severity: `{{ .Labels.severity }}`{{ end }}
+                {{ if .Labels.namespace }}Namespace: `{{ .Labels.namespace }}`{{ end }}
+                {{ if .Labels.pod }}Pod: `{{ .Labels.pod }}`{{ end }}
+                {{ if .Labels.cluster }}Cluster: `{{ .Labels.cluster }}`{{ end }}
+
+                {{ .Annotations.summary }}
+                {{ .Annotations.description }}
+                {{ end }}
+              parse_mode: Markdown
+              disable_notification: false
+              disable_web_page_preview: false
+              protect_content: false
+            disableResolveMessage: false

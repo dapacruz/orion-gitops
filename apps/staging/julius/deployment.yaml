@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: julius-n8n
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: julius-n8n
+  strategy:
+    type: Recreate
+
+  template:
+    metadata:
+      labels:
+        app: julius-n8n
+
+    spec:
+      # Pod-level security context (PSS restricted compliance)
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+        - name: n8n
+          image: docker.n8n.io/n8nio/n8n:1.123.4
+
+          # Container-level security context (PSS restricted compliance)
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+
+          # Resource management
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+
+          # Health checks
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3008
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3008
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          envFrom:
+            - configMapRef:
+                name: julius-n8n-config
+            - secretRef:
+                name: julius-n8n-env
+
+          ports:
+            - containerPort: 3008
+              protocol: TCP
+
+          volumeMounts:
+            - mountPath: /home/node/.n8n
+              name: n8n-data
+            - mountPath: /mnt/secrets-store
+              name: secrets-store
+              readOnly: true
+            # Required for readOnlyRootFilesystem
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /home/node/.cache
+              name: cache
+
+      restartPolicy: Always
+
+      volumes:
+        - name: n8n-data
+          persistentVolumeClaim:
+            claimName: julius-n8n-data
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: julius-secrets
+        # EmptyDir volumes for writable paths
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}

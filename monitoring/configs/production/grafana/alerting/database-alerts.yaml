@@ -1,0 +1,223 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alerting-database
+  namespace: monitoring
+  labels:
+    grafana_alert: "1"
+data:
+  database-alerts.yaml: |
+    apiVersion: 1
+    groups:
+      - orgId: 1
+        name: Database Alerts
+        folder: Kubernetes
+        interval: 5m
+        rules:
+          - uid: db001backupfailed
+            title: DB Failed Backup
+            condition: A
+            data:
+              - refId: A
+                queryType: ''
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  editorMode: code
+                  expr: |
+                    (cnpg_collector_last_failed_backup_timestamp > 0)
+                    and
+                    (time() - cnpg_collector_last_failed_backup_timestamp < 86400)
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: __auto
+                  maxDataPoints: 43200
+                  range: false
+                  refId: A
+            noDataState: OK
+            execErrState: Error
+            for: 5m
+            annotations:
+              description: 'Database {{ $labels.cluster }} backup failed within the last 24 hours'
+              summary: 'CloudNativePG backup failure detected'
+            labels:
+              severity: critical
+            isPaused: false
+
+          - uid: db002walarchiving
+            title: WAL Archiving Failing
+            condition: C
+            data:
+              - refId: A
+                queryType: ''
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  editorMode: code
+                  expr: (cnpg_pg_stat_archiver_last_failed_time - cnpg_pg_stat_archiver_last_archived_time) > 1
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: __auto
+                  maxDataPoints: 43200
+                  range: false
+                  refId: A
+              - refId: C
+                queryType: ''
+                relativeTimeRange:
+                  from: 0
+                  to: 0
+                datasourceUid: __expr__
+                model:
+                  conditions:
+                    - evaluator:
+                        params: [0, 0]
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params: []
+                      reducer:
+                        params: []
+                        type: avg
+                      type: query
+                  datasource:
+                    name: Expression
+                    type: __expr__
+                    uid: __expr__
+                  expression: A
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  refId: C
+                  type: threshold
+            noDataState: OK
+            execErrState: Error
+            for: 25m
+            annotations:
+              description: 'Database {{ $labels.cluster }} WAL archiving is behind'
+              summary: 'WAL archiving failure detected'
+            labels:
+              severity: warning
+            isPaused: false
+
+          - uid: db003replicationlag
+            title: Replication Lag High
+            condition: A
+            data:
+              - refId: A
+                queryType: ''
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  editorMode: code
+                  expr: cnpg_pg_replication_lag > 300
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: __auto
+                  maxDataPoints: 43200
+                  range: false
+                  refId: A
+            noDataState: OK
+            execErrState: Error
+            for: 5m
+            annotations:
+              description: 'Database {{ $labels.cluster }} has replication lag > 5 minutes'
+              summary: 'Database replication lag is high'
+            labels:
+              severity: warning
+            isPaused: false
+
+          - uid: db004replicadown
+            title: Replica Not Streaming
+            condition: A
+            data:
+              - refId: A
+                queryType: ''
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  editorMode: code
+                  expr: |
+                    cnpg_pg_replication_in_recovery == 1
+                    and
+                    cnpg_pg_replication_is_wal_receiver_up == 0
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: __auto
+                  maxDataPoints: 43200
+                  range: false
+                  refId: A
+            noDataState: OK
+            execErrState: Error
+            for: 5m
+            annotations:
+              description: 'Database {{ $labels.cluster }} replica has stopped streaming from primary'
+              summary: 'Database replica is not streaming'
+            labels:
+              severity: critical
+            isPaused: false
+
+          - uid: db005longtx
+            title: Long Running Transaction
+            condition: A
+            data:
+              - refId: A
+                queryType: ''
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  editorMode: code
+                  expr: cnpg_backends_max_tx_duration_seconds > 300
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: __auto
+                  maxDataPoints: 43200
+                  range: false
+                  refId: A
+            noDataState: OK
+            execErrState: Error
+            for: 5m
+            annotations:
+              description: 'Database {{ $labels.cluster }} has transaction running > 5 minutes'
+              summary: 'Long running transaction detected'
+            labels:
+              severity: warning
+            isPaused: false
+
+          - uid: db006fencing
+            title: Database Fencing Enabled
+            condition: A
+            data:
+              - refId: A
+                queryType: ''
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  editorMode: code
+                  expr: cnpg_collector_fencing_on == 1
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: __auto
+                  maxDataPoints: 43200
+                  range: false
+                  refId: A
+            noDataState: OK
+            execErrState: Error
+            for: 1m
+            annotations:
+              description: 'Database {{ $labels.cluster }} fencing is ON - cluster in degraded state'
+              summary: 'Database cluster is fenced'
+            labels:
+              severity: critical
+            isPaused: false

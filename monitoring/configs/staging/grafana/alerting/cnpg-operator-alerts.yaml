@@ -1,0 +1,166 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alerting-cnpg-operator
+  namespace: monitoring
+  labels:
+    grafana_alert: "1"
+data:
+  cnpg-operator-alerts.yaml: |
+    apiVersion: 1
+    groups:
+      - orgId: 1
+        name: CNPG Operator Alerts
+        folder: Kubernetes
+        interval: 5m
+        rules:
+          - uid: cnpg-operator-down
+            title: CNPG Operator Down
+            condition: A
+            data:
+              - refId: A
+                queryType: ''
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  editorMode: code
+                  expr: |
+                    absent(kube_pod_status_phase{namespace="cnpg-system",pod=~"cnpg-system-cnpg-cloudnative-pg-.*",phase="Running"})
+                    or
+                    kube_pod_status_phase{namespace="cnpg-system",pod=~"cnpg-system-cnpg-cloudnative-pg-.*",phase="Running"} != 1
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: __auto
+                  maxDataPoints: 43200
+                  range: false
+                  refId: A
+            noDataState: OK
+            execErrState: Error
+            for: 5m
+            annotations:
+              description: 'CloudNativePG operator is not running. Database management is impaired.'
+              summary: 'CNPG operator down'
+            labels:
+              severity: critical
+            isPaused: false
+
+          - uid: barman-plugin-down
+            title: Barman Cloud Plugin Down
+            condition: A
+            data:
+              - refId: A
+                queryType: ''
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  editorMode: code
+                  expr: |
+                    absent(kube_pod_status_phase{namespace="cnpg-system",pod=~"cnpg-plugin-barman-cloud-.*",phase="Running"})
+                    or
+                    kube_pod_status_phase{namespace="cnpg-system",pod=~"cnpg-plugin-barman-cloud-.*",phase="Running"} != 1
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: __auto
+                  maxDataPoints: 43200
+                  range: false
+                  refId: A
+            noDataState: OK
+            execErrState: Error
+            for: 5m
+            annotations:
+              description: 'Barman cloud plugin is not running. Database backups will fail.'
+              summary: 'Barman cloud plugin down'
+            labels:
+              severity: critical
+            isPaused: false
+
+          - uid: db-fencing-enabled
+            title: Database Fencing Enabled
+            condition: A
+            data:
+              - refId: A
+                queryType: ''
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  editorMode: code
+                  expr: cnpg_collector_fencing_on == 1
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: __auto
+                  maxDataPoints: 43200
+                  range: false
+                  refId: A
+            noDataState: OK
+            execErrState: Error
+            for: 5m
+            annotations:
+              description: 'Database {{ $labels.cluster }} has fencing enabled. Cluster is in a degraded state.'
+              summary: 'Database cluster fencing active'
+            labels:
+              severity: critical
+            isPaused: false
+
+          - uid: switchover-required
+            title: Manual Switchover Required
+            condition: A
+            data:
+              - refId: A
+                queryType: ''
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  editorMode: code
+                  expr: cnpg_collector_manual_switchover_required == 1
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: __auto
+                  maxDataPoints: 43200
+                  range: false
+                  refId: A
+            noDataState: OK
+            execErrState: Error
+            for: 5m
+            annotations:
+              description: 'Database {{ $labels.cluster }} requires manual switchover intervention'
+              summary: 'Manual database switchover required'
+            labels:
+              severity: warning
+            isPaused: false
+
+          - uid: collection-errors
+            title: CNPG Collection Errors
+            condition: A
+            data:
+              - refId: A
+                queryType: ''
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  editorMode: code
+                  expr: increase(cnpg_collector_collection_errors_total[1h]) > 10
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: __auto
+                  maxDataPoints: 43200
+                  range: false
+                  refId: A
+            noDataState: OK
+            execErrState: Error
+            for: 0s
+            annotations:
+              description: 'CNPG collector on {{ $labels.pod }} has had {{ $value }} collection errors in the last hour'
+              summary: 'High rate of metrics collection errors'
+            labels:
+              severity: warning
+            isPaused: false

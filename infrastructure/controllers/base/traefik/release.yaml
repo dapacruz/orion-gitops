@@ -17,4 +17,7 @@ spec:
       interval: 12h
   install:
     createNamespace: true
-  values: {}
+  values:
+    # Override the default IngressClass name from "traefik-traefik" to "traefik"
+    ingressClass:
+      name: traefik

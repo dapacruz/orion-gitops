@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alerting-notification-policies
+  namespace: monitoring
+  labels:
+    grafana_alert: "1"
+data:
+  notification-policies.yaml: |
+    apiVersion: 1
+    policies:
+      - orgId: 1
+        receiver: Telegram Bot
+        group_by: ['alertname', 'grafana_folder']
+        group_wait: 10s
+        group_interval: 5m
+        repeat_interval: 4h

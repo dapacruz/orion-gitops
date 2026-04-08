@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alerting-n8n
+  namespace: monitoring
+  labels:
+    grafana_alert: "1"
+data:
+  n8n-alerts.yaml: |
+    apiVersion: 1
+    groups:
+      - orgId: 1
+        name: n8n Alerts
+        folder: Applications
+        interval: 5m
+        rules:
+          - uid: n8n001poddown
+            title: n8n Pod Not Running
+            condition: A
+            data:
+              - refId: A
+                queryType: ''
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  editorMode: code
+                  expr: |
+                    absent(kube_pod_status_phase{pod=~".*n8n.*",phase="Running"})
+                    or
+                    kube_pod_status_phase{pod=~".*n8n.*",phase="Running"} != 1
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: __auto
+                  maxDataPoints: 43200
+                  range: false
+                  refId: A
+            noDataState: OK
+            execErrState: Error
+            for: 2m
+            annotations:
+              description: 'n8n pod is not running.'
+              summary: 'Automation platform is down: n8n is not running.'
+            labels:
+              severity: critical
+            isPaused: false

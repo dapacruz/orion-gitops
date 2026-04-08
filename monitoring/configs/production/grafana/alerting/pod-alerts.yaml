@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alerting-pod
+  namespace: monitoring
+  labels:
+    grafana_alert: "1"
+data:
+  pod-alerts.yaml: |
+    apiVersion: 1
+    groups:
+      - orgId: 1
+        name: Pod Alerts
+        folder: Kubernetes
+        interval: 5m
+        rules:
+          - uid: infra003podnotready
+            title: Pod Not Ready
+            condition: A
+            data:
+              - refId: A
+                queryType: ''
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  editorMode: code
+                  expr: |
+                    sum by (namespace, pod) (
+                      max by (namespace, pod) (
+                        kube_pod_status_phase{job="kube-state-metrics",phase=~"Pending|Unknown"}
+                      )
+                      * on (namespace, pod)
+                      group_left (owner_kind)
+                      topk by (namespace, pod) (
+                        1,
+                        max by (namespace, pod, owner_kind) (
+                          kube_pod_owner{owner_kind!="Job"}
+                        )
+                      )
+                    ) > 0
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: __auto
+                  maxDataPoints: 43200
+                  range: false
+                  refId: A
+            noDataState: OK
+            execErrState: Error
+            for: 5m
+            annotations:
+              description: 'Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in Pending or Unknown state for more than 5 minutes'
+              summary: 'Pod stuck in non-running state'
+            labels:
+              severity: warning
+            isPaused: false

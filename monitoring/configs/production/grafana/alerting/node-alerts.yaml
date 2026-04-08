@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alerting-node
+  namespace: monitoring
+  labels:
+    grafana_alert: "1"
+data:
+  node-alerts.yaml: |
+    apiVersion: 1
+    groups:
+      - orgId: 1
+        name: Node Alerts
+        folder: Kubernetes
+        interval: 5m
+        rules:
+          - uid: infra001nodenotready
+            title: Node Not Ready
+            condition: A
+            data:
+              - refId: A
+                queryType: ''
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  editorMode: code
+                  expr: |
+                    count(
+                      kube_node_status_condition{condition="Ready",job="kube-state-metrics",status="true"} == 0
+                      and on (cluster, node)
+                      kube_node_spec_unschedulable{job="kube-state-metrics"} == 0
+                    ) by (node)
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: __auto
+                  maxDataPoints: 43200
+                  range: false
+                  refId: A
+            noDataState: OK
+            execErrState: Error
+            for: 5m
+            annotations:
+              description: 'Node {{ $labels.node }} is not ready'
+              summary: 'Kubernetes node is down or not ready'
+            labels:
+              severity: critical
+            isPaused: false
+
+          - uid: infra002diskspace
+            title: Node Filesystem Almost Out Of Space
+            condition: A
+            data:
+              - refId: A
+                queryType: ''
+                relativeTimeRange:
+                  from: 600
+                  to: 0
+                datasourceUid: prometheus
+                model:
+                  editorMode: code
+                  expr: |
+                    (
+                      node_filesystem_avail_bytes{fstype!="",job="node-exporter",mountpoint!=""}
+                      /
+                      node_filesystem_size_bytes{fstype!="",job="node-exporter",mountpoint!=""}
+                      * 100 < 5
+                    )
+                    and
+                    node_filesystem_readonly{fstype!="",job="node-exporter",mountpoint!=""} == 0
+                  instant: true
+                  intervalMs: 1000
+                  legendFormat: __auto
+                  maxDataPoints: 43200
+                  range: false
+                  refId: A
+            noDataState: OK
+            execErrState: Error
+            for: 10m
+            annotations:
+              description: 'Filesystem {{ $labels.mountpoint }} on {{ $labels.instance }} has less than 5% space remaining'
+              summary: 'Node filesystem critically low on space'
+            labels:
+              severity: critical
+            isPaused: false
