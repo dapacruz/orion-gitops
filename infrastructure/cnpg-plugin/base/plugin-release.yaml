@@ -12,10 +12,10 @@ spec:
     - name: cnpg
   install:
     remediation:
-      retries: 5
+      retries: -1
   upgrade:
     remediation:
-      retries: 5
+      retries: -1
   chart:
     spec:
       chart: plugin-barman-cloud
