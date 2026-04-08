@@ -9,6 +9,9 @@ spec:
   releaseName: cnpg-plugin-barman-cloud
   chart:
     spec:
+      dependsOn:
+        - name: cert-manager
+        - name: cnpg
       chart: plugin-barman-cloud
       version: "0.3.1"
       sourceRef:
