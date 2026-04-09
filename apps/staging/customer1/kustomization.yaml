@@ -9,10 +9,10 @@ patches:
     patch: |-
       - op: replace
         path: /spec/parameters/userAssignedIdentityID
-        value: "4670ef01-c96e-46c7-9e47-36b703d3d122"
+        value: "${AKS_KEYVAULT_IDENTITY_CLIENT_ID}"
       - op: replace
         path: /spec/parameters/tenantId
-        value: "488cd0ad-9f25-4676-a378-b80a1063b0ab"
+        value: "${AZURE_TENANT_ID}"
   - target:
       kind: ObjectStore
       name: customer1-objectstore

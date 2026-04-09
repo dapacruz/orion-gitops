@@ -13,13 +13,13 @@ patches:
     patch: |-
       - op: replace
         path: /spec/parameters/userAssignedIdentityID
-        value: "ac9bb7e1-d975-415c-aeae-1a0e7ba4e163"
+        value: "${AKS_KEYVAULT_IDENTITY_CLIENT_ID}"
       - op: replace
         path: /spec/parameters/keyvaultName
         value: "kv-orion-prod"
       - op: replace
         path: /spec/parameters/tenantId
-        value: "488cd0ad-9f25-4676-a378-b80a1063b0ab"
+        value: "${AZURE_TENANT_ID}"
 
 configMapGenerator:
   - name: kube-prometheus-stack-values

@@ -12,4 +12,8 @@ spec:
     name: orion-staging
   dependsOn:
     - name: infra-configs
+  postBuild:
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-vars
 
