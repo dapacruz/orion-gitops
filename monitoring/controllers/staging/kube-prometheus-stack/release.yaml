@@ -6,6 +6,7 @@ metadata:
 spec:
   targetNamespace: monitoring
   interval: 30m
+
   chart:
     spec:
       chart: kube-prometheus-stack
@@ -20,10 +21,17 @@ spec:
     - kind: ConfigMap
       name: kube-prometheus-stack-values
 
+  timeout: 10m
   install:
     createNamespace: true
     crds: Create
+    timeout: 10m
+    remediation:
+      retries: 3
   upgrade:
+    timeout: 10m
+    remediation:
+      retries: 3
     crds: CreateReplace
   driftDetection:
     mode: enabled
@@ -31,3 +39,4 @@ spec:
       - paths: ["/metadata/annotations/prometheus-operator-validated"]
         target:
           kind: PrometheusRule
+
