@@ -26,7 +26,7 @@ patches:
     patch: |-
       - op: replace
         path: /spec/tls/0/hosts/0
-        value: "customer1.orion-staging.dcinfrastructures.io"
+        value: "customer1.dcinfrastructures.io"
       - op: replace
         path: /spec/rules/0/host
-        value: "customer1.orion-staging.dcinfrastructures.io"
+        value: "customer1.dcinfrastructures.io"

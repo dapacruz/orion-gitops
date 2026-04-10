@@ -39,11 +39,11 @@ grafana:
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
     hosts:
-      - grafana.orion-staging.dcinfrastructures.io
+      - grafana.dcinfrastructures.io
     tls:
       - secretName: grafana-tls
         hosts:
-          - grafana.orion-staging.dcinfrastructures.io
+          - grafana.dcinfrastructures.io
 
   # Mount CSI secrets volume to trigger secret sync
   extraSecretMounts:
